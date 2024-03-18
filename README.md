@@ -1,1 +1,33 @@
-# mus-div
+# Population size and music diversity
+
+This repo contains code and data for the paper "*Cultural diversity and population size in the real world"*. The Data Availability statement from the paper is copied below.
+
+> All analysis scripts and aggregated data at the regional level are available at <https://github.com/harin-git/mus-div>
+
+The data is also available at OSF: <https://osf.io/6zugm/>
+
+## Codebook
+
+All aggregated data is computed from bootstrapped means and variance.
+
+`boot_m` = bootstrap mean
+
+`boot_me` = bootstrap median
+
+`boot_sd` = standard deviation
+
+`boot_lower_ci` = 2.5% quantile
+
+`boot_upper_ci` = 97.5 quantile
+
+Diversity is measured using Hill's number, Gini index, and GS-Score
+
+`ind_div` = GS-Score (range 0 \~ 100)
+
+`div_q` = defines the order *q* of Hill's number. q0 = richness, q1 = shannon entropy, q2 = simpson's index
+
+`gini` = Gini index
+
+------------------------------------------------------------------------
+
+Please contact us if you run into any issues.

@@ -1,0 +1,9 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+bootstrap_output/
+data_output/
+figure_output/
+data/private/
+**/.DS_Store

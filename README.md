@@ -1,10 +1,6 @@
 # Population size and music diversity
 
-This repo contains code and data for the paper "*Cultural diversity and population size in the real world"*. The Data Availability statement from the paper is copied below.
-
-> All analysis scripts and aggregated data at the regional level are available at <https://github.com/harin-git/mus-div>
-
-The data is also available for download at OSF: <https://osf.io/6zugm/>
+This repo contains code and data for the paper "*Cultural diversity and population size in the real world"*. The data is also available for download at OSF: <https://osf.io/6zugm/>
 
 ## Codebook
 

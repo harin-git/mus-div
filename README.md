@@ -4,9 +4,13 @@ This repo contains code and data for the paper "*Cultural diversity and populati
 
 > All analysis scripts and aggregated data at the regional level are available at <https://github.com/harin-git/mus-div>
 
-The data is also available at OSF: <https://osf.io/6zugm/>
+The data is also available for download at OSF: <https://osf.io/6zugm/>
 
 ## Codebook
+
+`utils.R` script contains study wide packages and functions. It is called at the beginning of every script.
+
+<br>
 
 All aggregated data is computed from bootstrapped means and variance.
 
@@ -19,6 +23,8 @@ All aggregated data is computed from bootstrapped means and variance.
 `boot_lower_ci` = 2.5% quantile
 
 `boot_upper_ci` = 97.5 quantile
+
+<br>
 
 Diversity is measured using Hill's number, Gini index, and GS-Score
 

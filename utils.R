@@ -67,7 +67,7 @@ theme_dag <- function() {
 ## DATA LOADER
 ################################################################################
 DATA_PATH <- 'PATH_TO_RAW_FILES'
-DATA_PATH <- '/Users/hlee/Library/CloudStorage/GoogleDrive-hlee@deezer.com/My Drive/dataset/stream_1month/'
+
 load_user_data <- function(country = c('fr', 'br')){
   switch(country,
          fr = {

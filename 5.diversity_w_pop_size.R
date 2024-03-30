@@ -284,7 +284,7 @@ pop_split_agg <- joined_div %>%
   geom_point(position = position_dodge(0.3)) +
   geom_line(position = position_dodge(0.3), alpha = 0.5) +
   scale_color_manual(values = c(FR_COL1, BR_COL1, DE_COL1), guide = F) +
-  labs(x = 'Population size', y = 'Standardized BID') +
+  labs(x = 'Population size', y = 'Standardised BID') +
   facet_wrap(~ name))
 
 plot_save(BID_alternatives, plot_name = 'main/BID_aritst_genre', size = c(70, 50))

@@ -28,7 +28,7 @@ model_agg
     geom_point() +
     geom_errorbar(size = 0.2, width = 0.5) +
     geom_line(aes(linetype = type)) +
-    labs(x = '', y = 'Standardised estimate') +
+    labs(x = 'Population size', y = 'Standardised estimate') +
     theme(legend.position = 'none') +
     # ylim(limits = c(-1.5, 2)) +
     scale_colour_manual(values = c('#C41E3A', "gray80")))
@@ -40,7 +40,7 @@ bid_p %>% plot_save('main/BID_dag', c(60, 50))
     geom_point() +
     geom_errorbar(size = 0.2, width = 0.5) +
     geom_line(aes(linetype = type)) +
-    labs(x = '', y = 'Standardised estimate') +
+    labs(x = 'Population size', y = 'Standardised estimate') +
     theme(legend.position = 'none') +
     scale_colour_manual(values = c('#C41E3A', "gray80")))
 wid_p %>% plot_save('main/WID_dag', c(60, 50))

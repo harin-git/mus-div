@@ -85,6 +85,7 @@ algo_stream <- fr_streams %>%
   mutate(listen_type = factor(listen_type, levels = c('O', 'A'), labels = c('Organic', 'Algorithmic'))) %>%
   ggplot(aes(log10(pop_size), BID)) +
   geom_point(size = 0.5) +
+  ggpubr::stat_cor(r.accuracy = 0.01, p.accuracy = 0.001, cor.coef.name = 'r') +
   geom_smooth(method = 'glm', size = 0.7) +
   labs(x = 'Population size (log base 10)') +
   scale_x_continuous(labels = math_format(10 ^ .x), breaks = c(3, 4, 5)) +
@@ -111,7 +112,7 @@ pop_join <- pop_join %>% mutate(metric = factor(metric, labels = c('WID', 'BID')
 (census_pop <- pop_join %>%
   ggplot(aes(log10(population), boot_m)) +
   geom_point() +
-  ggpubr::stat_cor() +
+  ggpubr::stat_cor(r.accuracy = 0.01, p.accuracy = 0.001, cor.coef.name = 'r') +
   geom_smooth(method = 'glm', size = 0.7) +
   labs(x = 'Census population size (log base 10)', y = 'Diversity') +
   scale_x_continuous(labels = math_format(10 ^ .x)) +
@@ -123,7 +124,7 @@ pop_join <- pop_join %>% mutate(metric = factor(metric, labels = c('WID', 'BID')
 (census_pop_density <- pop_join %>%
     ggplot(aes(log10(population_density), boot_m)) +
     geom_point() +
-    ggpubr::stat_cor() +
+    ggpubr::stat_cor(r.accuracy = 0.01, p.accuracy = 0.001, cor.coef.name = 'r') +
     geom_smooth(method = 'glm', size = 0.7) +
     labs(x = 'Census population density (log base 10)', y = 'Diversity') +
     scale_x_continuous(labels = math_format(10 ^ .x)) +

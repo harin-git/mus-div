@@ -1,6 +1,6 @@
-# Population size and music diversity
+# Mechanisms of cultural diversity
 
-This repo contains code and data for the paper "*Cultural diversity and population size in the real world"*. The data is also available for download at OSF: <https://osf.io/6zugm/>
+This repo contains code and data for the paper "*Tracing the mechanisms of cultural diversity through 2.5 million individuals’ music listening patterns"*. The data is also available for download at OSF: <https://osf.io/6zugm/>
 
 ## Codebook
 

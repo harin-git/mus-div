@@ -307,7 +307,7 @@ WID_BID <- agg_stat %>%
 (WID_BID_p <- WID_BID %>%
   ggplot(aes(WID, BID, colour = country)) +
   geom_point(aes(size = pop_size), alpha = 0.8) +
-  add_cor() +
+  ggpubr::stat_cor(r.accuracy = 0.01, p.accuracy = 0.001, cor.coef.name = 'r') +
   geom_vline(xintercept = 0, linetype = 'dashed') +
   geom_hline(yintercept = 0, linetype = 'dashed') +
   scale_size(guide = 'none') +

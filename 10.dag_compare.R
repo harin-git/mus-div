@@ -21,6 +21,15 @@ model_agg %>% write_csv('data/dag/dag_outcome.csv')
 # STATS: report in text
 model_agg
 
+# estimate decline in largest quantile
+joined_models %>%
+  filter(category == 'large') %>%
+  select(boot, dag, type, estimate) %>%
+  pivot_wider(names_from = type, values_from = estimate) %>%
+  mutate(diff = Unadjusted - Adjusted) %>%
+  group_by(dag) %>%
+  summarise(get_boot_mean_ci(diff, 'boot'))
+
 # plot for BID and WID
 (bid_p <- model_agg %>%
     filter(dag == 'BID') %>%

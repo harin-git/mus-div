@@ -1,6 +1,11 @@
+#' Covariate analysis using all demographic factors (i.e., throwing everything into the sink approach)
+#' Raw user information is not available as open access.
+#' Aggregated bootstrapped data is available at: 'data/dag'
+
+# load project wide packages and functions
 source('utils.R')
 
-# using the graphical interface is helpful for the positioning of nodes https://www.dagitty.net/dags.html
+# load dag and census data
 dag_data <- readRDS('data_output/dag_data.rds')
 
 census_data <- read.csv('data/census/fr/fr_nuts3_meta.csv')
@@ -8,7 +13,6 @@ dag_data_quantile <- census_data %>% left_join(dag_data %>% distinct(NUTS3, pop_
 dag_data_quantile %>%
   group_by(pop_size_category) %>%
   summarise(median = median(population))
-
 
 # make dataframe to use for the model
 dag_var <- dag_data %>% 

@@ -1,10 +1,10 @@
-# Mechanisms of cultural diversity
+# Music cultural diversity
 
 This repo contains code and data for the paper "*Tracing the mechanisms of cultural diversity through 2.5 million individuals’ music listening patterns"*. The data is also available for download at OSF: <https://osf.io/6zugm/>
 
 ## Codebook
 
-`utils.R` script contains study wide packages and functions. It is called at the beginning of every script.
+`utils.R` script contains study wide packages and functions. It is called at the beginning of every script. If you are missing any of the packages, they need to be download first.
 
 <br>
 

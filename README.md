@@ -32,7 +32,9 @@ Diversity is measured using Hill's number, Gini index, and GS-Score.
 
 <br>
 Diversity measure outcomes are available in the folder `data/diversity` and comes in two versions.
-One with BID computed that does not exclude algorithmic recommendations (labelled 'combined'), while the other separates algorithmic recommended streams with organic streams. This is indicated as: `listen_type` = 'O' corresponding to 'organic' and 'A' corresponding to 'algorithmic'
+One with BID computed that does not exclude algorithmic recommendations (labelled 'combined'), while the other separates algorithmic recommended streams with organic streams. This is indicated as: 
+
+`listen_type` = 'O' corresponding to 'organic' and 'A' corresponding to 'algorithmic'
 
 ------------------------------------------------------------------------
 

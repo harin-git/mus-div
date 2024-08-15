@@ -72,6 +72,13 @@ geo_cor_p %>% plot_save('SI/geo_location_threshold_correlation', c(100, 50))
 ################################################################################
 # ALGORITHMIC BIASES
 ################################################################################
+song_dict <- read.csv('data/private/song_dict.csv')
+# take the first genre tag
+song_dict <- song_dict %>%
+  mutate(genre = raw_genre %>% 
+           str_split(pattern = ',') %>%
+           map_chr(1))
+
 algo_bias <- function(country){
   col_pal <- switch(
     country,
@@ -115,7 +122,6 @@ algo_bias <- function(country){
   # update streams
   streams <- streams %>% filter(study_user_id %in% user_clean$study_user_id)
   
-  
   ## TESTING
   algo_dt <- streams %>%
     left_join(user_clean %>% distinct(study_user_id, regional_group, age, gender)) %>%
@@ -131,23 +137,38 @@ algo_bias <- function(country){
   # Algorithmic vs. organic streams
   message('computing BID...')
   algo_orga <- algo_dt %>%
+    left_join(song_dict) %>%
     group_by(regional_group, pop_size, listen_type) %>%
     sample_n(10000, replace = TRUE) %>% # balance the number of streams per city
-    summarise(BID = hill(table(product_id), q = 1))
+    summarise(BID = hill(table(product_id), q = 1),
+              BID_aritst = hill(table(artist_id), q = 1),
+              BID_genre = hill(table(genre), q = 1)) %>%
+    ungroup()
   
-  (algo_orga_p <- algo_orga %>%
-      na.omit() %>%
-      mutate(listen_type = factor(listen_type, levels = c('O', 'A'), labels = c('Organic', 'Algorithmic'))) %>%
-      ggplot(aes(log10(pop_size), BID)) +
-      geom_point(size = 0.5, colour = col_pal[3]) +
-      ggpubr::stat_cor(r.accuracy = 0.01, p.accuracy = 0.001, cor.coef.name = 'r', colour = col_pal[3]) +
-      geom_smooth(method = 'glm', size = 0.7, colour = col_pal[3]) +
-      labs(x = 'Population size (log base 10)') +
-      scale_x_continuous(labels = math_format(10 ^ .x), breaks = c(3, 4, 5)) +
-      annotation_logticks(
-        sides = 'b'
-      ) +
-      facet_wrap(~ listen_type))
+  # report the correlations
+  cor_algo <- algo_orga %>%
+    pivot_longer(c(BID, BID_aritst, BID_genre)) %>%
+    group_by(listen_type, name) %>%
+    summarise(cor = cor(log10(pop_size), value),
+              lower_ci = cor.test(log10(pop_size), value)$conf.int[1],
+              upper_ci = cor.test(log10(pop_size), value)$conf.int[2])
+  
+  print(cor_algo)
+  
+  
+  # (algo_orga_p <- algo_orga %>%
+  #     na.omit() %>%
+  #     mutate(listen_type = factor(listen_type, levels = c('O', 'A'), labels = c('Organic', 'Algorithmic'))) %>%
+  #     ggplot(aes(log10(pop_size), BID)) +
+  #     geom_point(size = 0.5, colour = col_pal[3]) +
+  #     ggpubr::stat_cor(r.accuracy = 0.01, p.accuracy = 0.001, cor.coef.name = 'r', colour = col_pal[3]) +
+  #     geom_smooth(method = 'glm', size = 0.7, colour = col_pal[3]) +
+  #     labs(x = 'Population size (log base 10)') +
+  #     scale_x_continuous(labels = math_format(10 ^ .x), breaks = c(3, 4, 5)) +
+  #     annotation_logticks(
+  #       sides = 'b'
+  #     ) +
+  #     facet_wrap(~ listen_type))
   
   # Amount of algorithmic streams per region by age group
   message('computing age level difference...')
@@ -213,7 +234,7 @@ algo_bias <- function(country){
   #     theme(legend.position = 'right'))
   
   # gather all plots and return
-  algo_orga_p + algo_freq_p + algo_gen_p + plot_layout(widths =  c(2, 1, 1))
+  algo_freq_p + algo_gen_p
 }
 
 fr_algo <- algo_bias('fr')
@@ -224,7 +245,7 @@ de_algo <- algo_bias('de')
 joint_algo <- fr_algo / br_algo / de_algo
 
 # save plot for SI figure
-joint_algo %>% plot_save('SI/algorithmic_organic_streams', c(280, 200))
+joint_algo %>% plot_save('SI/algorithmic_organic_streams', c(180, 200))
 
 
 
@@ -232,7 +253,7 @@ joint_algo %>% plot_save('SI/algorithmic_organic_streams', c(280, 200))
 # POPULATION DENSITY AND CENSUS POPULATION
 ################################################################################
 # Does result change when using census population and density instead of population size derived from n users?
-fr_boot <- read.csv('data/diversity/FR_diversity.csv')
+fr_boot <- read.csv('data/diversity/FR_diversity.csv') %>% filter(listen_type == 'O')
 fr_census <- read.csv('data/census/fr/fr_nuts3_meta.csv')
 
 pop_join <- fr_boot %>% filter(metric %in% c('ind_div', 'song_div_q1')) %>%

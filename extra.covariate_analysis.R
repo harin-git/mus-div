@@ -30,6 +30,7 @@ dag_var <- dag_data %>%
     img = log_immigrant_percentage,
     inc = log_income_per_capita,
     soc = log_global_friends,
+    alg = algo_nuts,
     gen = gender,
     pop_category = pop_size_category
   ) %>%
@@ -38,10 +39,10 @@ dag_var <- dag_data %>%
 
 # Report stats on how all demographic factors explain BID and WID in each population quantiles
 # Population quantile = 1 (small), 2 (medium), 3 (large)
-lm(BID ~ mus + age_nuts + edu + img + inc + soc + gen, data = dag_var %>% filter(pop_category == 1)) %>% summary()
-lm(BID ~ mus + age_nuts + edu + img + inc + soc + gen, data = dag_var %>% filter(pop_category == 2)) %>% summary()
-lm(BID ~ mus + age_nuts + edu + img + inc + soc + gen, data = dag_var %>% filter(pop_category == 3)) %>% summary()
+lm(BID ~ mus + age_nuts + edu + img + inc + soc + gen + alg, data = dag_var %>% filter(pop_category == 1)) %>% summary()
+lm(BID ~ mus + age_nuts + edu + img + inc + soc + gen + alg, data = dag_var %>% filter(pop_category == 2)) %>% summary()
+lm(BID ~ mus + age_nuts + edu + img + inc + soc + gen + alg, data = dag_var %>% filter(pop_category == 3)) %>% summary()
 
-lm(WID ~ mus + age_nuts + edu + img + inc + soc + gen, data = dag_var %>% filter(pop_category == 1)) %>% summary()
-lm(WID ~ mus + age_nuts + edu + img + inc + soc + gen, data = dag_var %>% filter(pop_category == 2)) %>% summary()
-lm(WID ~ mus + age_nuts + edu + img + inc + soc + gen, data = dag_var %>% filter(pop_category == 3)) %>% summary()
+lm(WID ~ mus + age_nuts + edu + img + inc + soc + gen + alg, data = dag_var %>% filter(pop_category == 1)) %>% summary()
+lm(WID ~ mus + age_nuts + edu + img + inc + soc + gen + alg, data = dag_var %>% filter(pop_category == 2)) %>% summary()
+lm(WID ~ mus + age_nuts + edu + img + inc + soc + gen + alg, data = dag_var %>% filter(pop_category == 3)) %>% summary()

@@ -22,13 +22,19 @@ All aggregated data is computed from bootstrapped means and variance.
 
 <br>
 
-Diversity is measured using Hill's number, Gini index, and GS-Score
+Diversity is measured using Hill's number, Gini index, and GS-Score.
 
 `ind_div` = GS-Score (range 0 \~ 100)
 
 `div_q` = defines the order *q* of Hill's number. q0 = richness, q1 = shannon entropy, q2 = simpson's index
 
 `gini` = Gini index
+
+<br>
+Diversity measure outcomes are available in the folder `data/diversity` and comes in two versions.
+One with BID computed that does not exclude algorithmic recommendations (labelled 'combined'), while the other separates algorithmic recommended streams with organic streams. This is indicated in the column.
+
+`listen_type` = 'O' corresponding to 'organic' and 'A' corresponding to 'algorithmic'
 
 ------------------------------------------------------------------------
 

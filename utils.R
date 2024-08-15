@@ -245,7 +245,8 @@ grab_random <- function(vec, separator = ',', n_sample = 1){
 add_cor <- function(method = 'pearson') {
   ggpubr::stat_cor(
     method = method,
-    p.accuracy = 0.01,
+    cor.coef.name = 'r',
+    p.accuracy = 0.001,
     r.accuracy = 0.01 )
 }
 

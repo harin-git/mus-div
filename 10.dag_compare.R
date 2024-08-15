@@ -3,11 +3,10 @@
 # load all necessary packages and functions
 source('utils.R')
 
-WID_model <- readRDS('bootstrap_output/WID_DAG_model_B100_boot.rds') %>% cbind(dag = 'WID')
-BID_model <- readRDS('bootstrap_output/BID_DAG_model_B100_boot.rds') %>% cbind(dag = 'BID')
+WID_model <- readRDS('bootstrap_output/WID_DAG_model_B1000_boot.rds') %>% cbind(dag = 'WID')
+BID_model <- readRDS('bootstrap_output/BID_DAG_model_B1000_boot.rds') %>% cbind(dag = 'BID')
 
 joined_models <- rbind(WID_model, BID_model)
-
 
 # aggregate the bootstraps
 model_agg <- joined_models %>%

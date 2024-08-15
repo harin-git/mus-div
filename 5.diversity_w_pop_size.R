@@ -7,13 +7,18 @@ source('utils.R')
 ## DATA PREPARATION
 ################################################################################
 N_BOOT <- 1000
+COMBINED <- FALSE # if TRUE use data that combines organic and algorithm
 
 # load diversity data
-fr_div <- readRDS(file.path('bootstrap_output', sprintf('fr_1month_B%s_boot.rds', N_BOOT))) %>% cbind(country = 'France')
-br_div <- readRDS(file.path('bootstrap_output', sprintf('br_1month_B%s_boot.rds', N_BOOT))) %>% cbind(country = 'Brazil')
-de_div <- readRDS(file.path('bootstrap_output', sprintf('de_1month_B%s_boot.rds', N_BOOT))) %>% cbind(country = 'Germany')
+type <- ifelse(COMBINED, 'boot_combined','boot')
+fr_div <- readRDS(file.path('bootstrap_output', sprintf('fr_1month_B%s_%s.rds', N_BOOT, type))) %>% cbind(country = 'France')
+br_div <- readRDS(file.path('bootstrap_output', sprintf('br_1month_B%s_%s.rds', N_BOOT, type))) %>% cbind(country = 'Brazil')
+de_div <- readRDS(file.path('bootstrap_output', sprintf('de_1month_B%s_%s.rds', N_BOOT, type))) %>% cbind(country = 'Germany')
 
 joined_div <- do.call(bind_rows, list(fr_div, br_div, de_div))
+
+# take only organic streams
+if(!COMBINED){joined_div <- joined_div %>% filter(listen_type == 'O')}
 
 # load user population size data
 fr_pop <- readRDS(file.path('data_output', 'FR_1month_user_population.rds')) %>% cbind(country = 'France')
@@ -67,6 +72,7 @@ gam_agg <- gam_join %>%
 ################################################################################
 ## PLOT DIVERSITY AS FUNCTION OF POP SIZE
 ################################################################################
+require(correlation)
 plot_diversity <- function(plot_type = c('WID', 'BID')){
   
   # diversity over continuous population
@@ -118,35 +124,40 @@ plot_diversity('BID')
 
 
 # STATS: bootstrapped correlations for SI reporting
-cor_boot <- joined_div %>%
+cor_boot_m <- joined_div %>%
+  group_by(country, regional_group) %>%
+  summarise(song = mean(song_div_q1),
+            artist = mean(artist_div_q1),
+            genre = mean(genre_div_q1),
+            WID = mean(ind_div)) %>%
   left_join(joined_pop) %>%
-  select(country, boot, user_pop_size_log10, song = song_div_q1, artist = artist_div_q1, genre = genre_div_q1, ind = ind_div) %>%
-  group_by(country, boot) %>%
-  summarise(across(
-    c(song:ind),
-    list(
-      pearson = ~cor(.x, user_pop_size_log10, method = 'pearson'),
-      spearman = ~cor(.x, user_pop_size_log10, method = 'spearman')
-    )
-  )) %>%
   ungroup() 
 
-cor_boot_agg <- cor_boot %>%
-  pivot_longer(song_pearson:ind_spearman, names_to = 'metric') %>%
-  group_by(country, metric) %>%
-  reframe(get_boot_mean_ci(value, 'boot'))
-
-cor_boot_agg <- cor_boot_agg %>%
-  mutate_if(is.numeric, ~signif(., 2)) %>%
-  mutate(country = factor(country, levels = c('France', 'Brazil', 'Germany'))) %>%
-  arrange(country)
-
-print(cor_boot_agg)
+pearson_spearman <- function(cnt){
+  message(sprintf('Reporting for %s', cnt))
+  
+  # report pearson
+  cor_boot_m %>% 
+    filter(country == cnt) %>% 
+    select(pop_size = user_pop_size_log10, WID, song, artist, genre) %>%
+    correlation(method = 'pearson') %>%
+    print()
+  
+  # report spearman
+  cor_boot_m %>% 
+    filter(country == cnt) %>% 
+    select(pop_size = user_pop_size_log10, WID, song, artist, genre) %>%
+    correlation(method = 'spearman') %>%
+    print()
+}
+pearson_spearman('France')
+pearson_spearman('Brazil')
+pearson_spearman('Germany')
 
 
 # STATS: report 500,000 (urban) vs. 100,000 (rural) region differences
-census_data <- read.csv('data/census/fr/fr_nuts3_meta.csv') %>% ungroup() 
-census_data <- census_data %>% 
+fr_census <- read.csv('data/census/fr/fr_nuts3_meta.csv') %>% ungroup() 
+census_data <- fr_census %>% 
   select(regional_group = NUTS3, population) %>%
   mutate(region_category = ifelse(population >= 500000, 'urban', 'rural'))
 
@@ -191,6 +202,27 @@ census_diff_cohen$bid$cohensD %>% quantile(c(0.025, 0.975))
 census_diff_cohen$wid$cohensD %>% mean()
 census_diff_cohen$wid$cohensD %>% quantile(c(0.025, 0.975))
 
+# STATS: report correlations for different orders of q in SI
+agg_q_mean <- joined_div %>%
+  group_by(country) %>%
+  summarise(get_boot_mean_ci(song_div_q0, 'song_div_q0'),
+            get_boot_mean_ci(song_div_q1, 'song_div_q1'),
+            get_boot_mean_ci(song_div_q2, 'song_div_q2'),
+            get_boot_mean_ci(song_gini, 'song_gini'))
+
+agg_q_order <- joined_div %>%
+  group_by(country, regional_group) %>%
+  summarise(q0 = mean(song_div_q0),
+            q1 = mean(song_div_q1),
+            q2 = mean(song_div_q2),
+            gini = mean(song_gini)) %>%
+  ungroup() %>%
+  left_join(joined_pop) %>%
+  select(country, pop_size = user_pop_size_log10, q0, q1, q2, gini)
+
+agg_q_order %>% filter(country == 'France') %>% correlation::correlation()
+agg_q_order %>% filter(country == 'Brazil') %>% correlation::correlation()
+agg_q_order %>% filter(country == 'Germany') %>% correlation::correlation()
 
 
 ################################################################################
@@ -248,7 +280,7 @@ TukeyHSD(aov_model)
 
 agg_sel %>%
   pivot_wider(names_from = country, values_from = boot_m) %>%
-  reframe(get_t_stat(Brazil %>% unlist(), France %>% unlist()))
+  reframe(get_t_stat(Germany %>% unlist(), France %>% unlist()))
 
 ################################################################################
 ## DIFFERENT TYPES OF BID: replicating for genres and artists
@@ -290,7 +322,7 @@ pop_split_agg <- joined_div %>%
 plot_save(BID_alternatives, plot_name = 'main/BID_aritst_genre', size = c(70, 50))
 
 ################################################################################
-## INDIVIDUAL VS. COLLECTIVE DIVERSITY
+## WID VS. BID
 ################################################################################
 # relations between WID and BID for SI figure
 WID_BID <- agg_stat %>%

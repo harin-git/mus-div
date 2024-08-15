@@ -1,6 +1,6 @@
 #' Clean and explore the distribution of confounders included in the DAG model.
 #' The output of this script serve as the input data for the DAG model.
-#' Raw user information is not available as open access.
+#' Raw user information and stream is not available as open access.
 
 # load project wide packages and functions
 source('utils.R')
@@ -20,11 +20,13 @@ make_small_histogram <- function(df, var_name){
 ## PREPARTION
 ################################################################################
 fr_users <- readRDS('data/private/user/fr_user.rds')  # all French users
+fr_stream <- readRDS('data/private/stream/fr_stream_1month_LAN.rds') # all French streams
 fr_pop <- readRDS('data_output/FR_1month_user_population.rds') # population size
 fr_census <- readRDS('data/census/fr/fr_insee_2022_meta.rds') # census data
 fr_venues <- read.csv('data/census/fr/fr_music_venues.csv') # music venues
 fr_bid_wid <- read.csv('data/diversity/FR_diversity.csv') # computed regional BID and WID
 facebook_friends <- read.csv('data/census/fr/fr_social_connections.csv') # facebook social connectivity index data
+
 
 # define the number of quantile to split the data. 
 # Having more quantile comes with more granularity but loses the balance across the groups in DAG
@@ -113,6 +115,37 @@ make_small_histogram(census_clean, 'log_immigrant_percentage')
 make_small_histogram(census_clean, 'uni_degree_percentage')
 
 
+################################################################################
+## ALGORITHMIC USE
+################################################################################
+# proportion of algorithm use by NUTS3
+# filter only regions where more than 200 people can be used for aggregation.
+# this is the same criteria as done with general correlations
+min_user_per_region <- 200
+
+# very high values of GS score is noise. Ambiguous GS-scores are coded 100
+max_geo_loc <- 10
+select_region <- fr_users %>%
+  filter(!is.na(inv_gs_score), inv_gs_score < 75, n_geo_loc < max_geo_loc) %>%
+  group_by(NUTS3) %>%
+  filter(n() >= min_user_per_region)
+select_region <- select_region$NUTS3 %>% unique()
+
+user_clean <- fr_users %>% filter(NUTS3 %in% select_region)
+
+# update streams
+stream_clean <- fr_stream %>% 
+  filter(study_user_id %in% user_clean$study_user_id) %>%
+  left_join(user_clean %>% select(study_user_id, NUTS3))
+
+algo_stream <- stream_clean %>%
+  group_by(NUTS3) %>%
+  summarise(algo_nuts = sum(listen_type == 'A') / n() * 100)
+
+algo_stream$algo_nuts %>% test_norm('Algorithmic stream proportion')
+make_small_histogram(algo_stream, 'algo_nuts')
+
+
 #################################################################################
 ## MUSICAL VENUES
 ################################################################################
@@ -152,7 +185,8 @@ output <- users_clean %>%
   left_join(pop_clean) %>%
   left_join(census_clean) %>%
   left_join(venue_clean) %>%
-  left_join(friends)
+  left_join(friends) %>%
+  left_join(algo_stream) 
 
 # see the extent of missing data in each variable
 non_factor_vars <- output %>%
@@ -167,7 +201,7 @@ non_factor_vars %>%
 output[is.na(output$uni_degree_percentage), ]$NUTS3 %>% unique()
 
 # draw the data at the nuts level
-nuts_edu <- read.csv('../../france_political_conflict_data/diplomas/diplomesdepartements.csv') %>%
+nuts_edu <- read.csv('data/private/diplomesdepartements.csv') %>%
   select(dep, nomdep, pbac2022)
 
 paris_nuts_edu <- nuts_edu %>% filter(nomdep == 'PARIS')

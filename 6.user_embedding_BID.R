@@ -10,6 +10,9 @@ source('utils.R')
 ################################################################################
 fr_users <- read_rds('data/private/user/fr_user.rds')
 fr_embedding <- read_rds('data/private/fr_embedding.rds')
+fr_pop_size <- read.csv('data/diversity/FR_diversity.csv') %>% 
+  select(NUTS3 = regional_group, n_users) %>%
+  distinct(NUTS3, n_users)
 
 fr_joined <- fr_embedding %>% na.omit() %>% left_join(fr_users %>% select(study_user_id, NUTS3, NUTS3_name))
 
@@ -42,16 +45,21 @@ umap_df <- cbind.data.frame(setNames(as.data.frame(umap_feat), c("x", "y")), met
 # save the umap output
 umap_df %>% write_rds('data_output/user_embedding_umap.rds')
 
+# add population size meta data
+umap_df <- umap_df %>% left_join(fr_pop_size)
+
 # plot UMAP and perform KDE over all regions
-umap_df %>%
+(umap_all <- umap_df %>%
     ggplot(aes(x, y)) +
     stat_density_2d(aes(fill = ..density..), 
                     geom = "raster", 
                     contour = FALSE, 
-                    h = 3,
-                    n = 50) +
+                    h = 4,
+                    n = 100) +
     labs(y = 'Dim.2', x = 'Dim.1') +
-    facet_wrap(~ NUTS3)
+    facet_wrap(~ reorder(NUTS3_name, -n_users), ncol = 10))
+
+umap_all %>% plot_save('SI/fr_bid_umap_all', c(250, 300))
 
 ################################################################################
 ## REGIONAL EXAMPLES
@@ -60,7 +68,7 @@ umap_df %>%
 paris <- 'FR101'
 orne <- 'FRD13'
 
-make_example_regional <- function(city, h = 2, max_lim = 0.05){
+make_example_regional <- function(city, h = 2, max_lim = 0.05, SI = FALSE){
   ggplot() +
     geom_point(
       data = umap_df,
@@ -90,6 +98,7 @@ make_example_regional <- function(city, h = 2, max_lim = 0.05){
       caption = "",
       fill = 'Density'
     ) +
+    (if(SI){theme_void() + theme(legend.position = 'none')}) +
     scale_y_continuous(limits = c(-6, 6)) +
     scale_x_continuous(limits = c(-10, 10))
 }
@@ -99,6 +108,18 @@ make_example_regional <- function(city, h = 2, max_lim = 0.05){
 
 (joined_raster <- paris_raster + orne_raster + plot_layout(guide = 'collect') & theme(legend.position = 'right'))
 joined_raster %>% plot_save('main/umap_user_cluster', c(113, 50))
+
+# add several more to SI
+make_example_regional('FR107', h = 3, max_lim = 0.04, SI = T) %>%
+  plot_save('SI/val-de-marne', c(30, 30)) # val-de-marne
+make_example_regional('FRL05', h = 3, max_lim = 0.04, SI = T) %>%
+  plot_save('SI/var', c(30, 30)) # var
+make_example_regional('FRC12', h = 3, max_lim = 0.04, SI = T) %>%
+  plot_save('SI/nievre', c(30, 30)) # nievre
+make_example_regional('FRG01', h = 3, max_lim = 0.04, SI = T) %>%
+  plot_save('SI/loire-atlantique', c(30, 30)) # loire-atlantique
+make_example_regional('FRM01', h = 3, max_lim = 0.04, SI = T) %>%
+  plot_save('SI/corse-du-sud', c(30, 30)) # corse-du-sud
 
 
 # make small maps for inset into the figures
@@ -127,7 +148,7 @@ france_map %>% plot_save('main/france_map', size = c(30,30))
 
 
 ################################################################################
-## CORRELATION WITH HILL NUMBER BID
+## CORRELATION WITH HILL'S NUMBER BID
 ################################################################################
 # sample a equal number of 800 users (smallest region reference) as doing it on the entire set is too costly
 set.seed(42)
@@ -148,24 +169,49 @@ for (i in 1:length(regions)) {
     select(starts_with('dim'))
   
   cos_m <- embed %>% as.matrix() %>% lsa::cosine() %>% mean()
+  cos_m <- 1 - cos_m
   cos_sd <- embed %>% as.matrix() %>% lsa::cosine() %>% sd()
+  cos_sd <- 1 - cos_sd
   
   storage[[i]] <- tibble(NUTS3 = regions[i], cos_m, cos_sd)
 }
 cosine_output <- do.call(rbind, storage)
 
 # bind with hill's number diversity data
-fr_bid <- read_rds('data/diversity/FR_diversity.csv') %>% 
-  filter(metric == 'song_div_q1') %>%
+fr_bid <- read_csv('data/diversity/FR_diversity.csv') %>% 
+  filter(listen_type == 'O', metric == 'song_div_q1') %>%
   select(NUTS3 = regional_group, BID = boot_m, user_pop_size_log10)
 
 # STATS: get correlations with frequency based BID and with population size
 corr <- cosine_output %>% left_join(fr_bid)
+correlation::correlation(corr %>% select(cos_sd, BID, user_pop_size_log10))
 
-# by mean cosine similarity
-cor.test(corr$cos_m, corr$BID, method = 'pearson', alternative = "two.sided")
-cor.test(corr$cos_m, corr$user_pop_size_log10, method = 'pearson', alternative = "two.sided")
+# add region labels for plotting
+fr_regions <- read.csv('data/census/region_codebook.csv') %>%
+  filter(country_code == 'FR') %>% select(NUTS3 = regional_group, region_name = state_name) %>%
+  distinct()
+corr <- corr %>% left_join(fr_regions)
 
-# by sd cosine similarity
-cor.test(corr$cos_sd*-1, corr$BID, method = 'pearson', alternative = "two.sided")
-cor.test(corr$cos_sd*-1, corr$user_pop_size_log10, method = 'pearson', alternative = "two.sided")
+# make plots for main
+(cosine_plot_main <- corr %>%
+    ggplot(aes(cos_sd, BID)) +
+    geom_point(size = 0.7, alpha = 0.5, colour = FR_COL1) +
+    geom_smooth(method = 'lm', se = F, colour = FR_COL1) +
+    # add_cor() +
+    labs(x = 'User dispersion', y = 'BID'))
+
+plot_save(cosine_plot_main, 'main/bid_user_dispersion', c(50, 40))
+
+# make plots for SI
+(cosine_plot_si <- corr %>%
+    ggplot(aes(cos_sd, BID)) +
+    geom_point(alpha = 0.2, colour = 'blue') +
+    geom_smooth(method = 'lm', se = F) +
+    add_cor() +
+    labs(x = 'User dispersion', y = 'BID') +
+    geom_text(aes(label = region_name), nudge_y = 0.01, check_overlap = T, size = 2.5))
+
+plot_save(cosine_plot_si, 'SI/bid_user_dispersion', c(183, 150))
+
+
+

@@ -115,3 +115,7 @@ control_stream_amount_agg$country <- factor(control_stream_amount_agg$country,
   labs(x = 'Age', y = 'WID', shape = 'Stream amount category'))
 
 stream_control_p %>% plot_save('SI/stream_control_WID_w_age', size = c(183, 80))
+
+
+
+

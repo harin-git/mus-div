@@ -6,7 +6,7 @@
 source('utils.R')
 
 # Hyper param
-country <- 'FR' # define country as FR, DE, BR
+country <- 'DE' # define country as FR, DE, BR
 min_user_per_region <- 200 # to ensure anonymity at the regional aggregate
 max_geo_loc <- 10 # users with no more than 10 unique IP address locations
 N_BOOT <- 1000 # number of bootstraps
@@ -55,19 +55,14 @@ stream_data <- switch(country,
                       BR = readRDS('data/private/stream/br_stream_1month_LAN.rds'))
 
 stream_clean <- user_clean %>%
-  select(user_study_id, regional_group) %>%
+  select(study_user_id, regional_group) %>%
   left_join(stream_data)
 
 # add song information
-song_data <- readRDS('data/private/song/song_meta.rds')
+song_data <- read.csv('data/private/song_dict.csv')
 song_data_simple <- song_data %>% 
-  select(product_id, artist_id, raw_genre) %>%
+  select(product_id, artist_id, selected_genre) %>%
   filter(product_id %in% stream_clean$product_id)
-song_data_simple <- song_data_simple %>%
-  group_by(product_id) %>%
-  mutate(selected_genre = grab_random(raw_genre)) %>%
-  ungroup() %>%
-  select(-raw_genre)
 
 # join song information to stream data
 stream_clean <- stream_clean %>% left_join(song_data_simple)
@@ -75,11 +70,11 @@ stream_clean <- stream_clean %>% left_join(song_data_simple)
 ################################################################################
 ## BOOT STRAPPING
 ################################################################################
-regional_stat <- function(stream_data, user_data, n_boot = 10, n_stream_sample = 10000, 
+regional_stat <- function(stream_data, user_data, n_boot = 10, n_stream_sample = 1000, 
                           n_user_sample = 100, replace_boot = F){
   # make different groupings depending on whether to do the split or not
   message('Grouping data...')
-  grouped_stream <- stream_data %>% group_by(regional_group)
+  grouped_stream <- stream_data %>% group_by(regional_group, listen_type) %>% filter(!is.na(listen_type))
   grouped_user <- user_data %>% filter(!is.na(inv_gs_score), inv_gs_score < 75) %>% group_by(regional_group)
   
   
@@ -132,13 +127,12 @@ boot_stat <- regional_stat(stream_clean,
                            user_clean,
                            n_boot = N_BOOT,
                            replace_boot = FALSE)
-boot_stat %>% saveRDS(file.path('bootstrap_output', sprintf('%s_1month_B%s_boot.rds', country, N_BOOT)))
-
+boot_stat %>% saveRDS(file.path('bootstrap_output', sprintf('%s_1month_B%s_boot_OA.rds', country, N_BOOT)))
 
 # aggregate across the bootstraps for summary statistics
 agg_stat <- boot_stat %>%
   pivot_longer(cols = song_div_q0:song_age, names_to = 'metric') %>%
-  group_by(regional_group, metric) %>%
+  group_by(regional_group, metric, listen_type) %>%
   reframe(get_boot_mean_ci(value, 'boot'))
 
 # add population size

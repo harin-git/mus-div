@@ -20,45 +20,52 @@ source('utils.R')
 ################################################################################
 testing <- FALSE # for testing purposes
 
-outcome <- 'WID' # 'BID' or 'WID'
-n_boot <- 100 # number of bootstraps for the model. Computationally costly.
+exposure <- 'pop_category' # exposure variable
+outcome <- 'BID' # 'BID' or 'WID'
+n_boot <- 1000 # number of bootstraps for the model. Computationally costly.
 
 
 # functions for making and plotting the DAG
 make_dag <- function(outcome = 'draw', exposure = 'pop_category'){
   dag_script <- 'dag {
     bb="0,0,1,1"
-    age [pos="0.350,0.640"]
     BID [pos="0.200,0.570"]
+    WID [pos="0.520,0.570"]
+    age [pos="0.350,0.640"]
+    alg [pos="0.350,0.516"]
     edu [pos="0.350,0.360"]
     gen [pos="0.617,0.461"]
     img [pos="0.200,0.360"]
     inc [pos="0.520,0.360"]
-    WID [pos="0.520,0.570"]
     mus [pos="0.550,0.680"]
-    pops [exposure, pos="0.420,0.760"]
+    pops [exposure,pos="0.420,0.760"]
     soc [pos="0.280,0.760"]
+    WID -> BID
     age -> BID
     age -> WID
+    age -> alg
     age -> pops
     age -> soc
+    alg -> BID
+    alg -> WID
     edu -> BID
     edu -> WID
     edu -> soc
-    gen -> inc
     gen -> WID
+    gen -> alg
+    gen -> inc
     img -> BID
     img -> WID
     img -> soc
     inc -> BID
-    inc -> edu
     inc -> WID
-    WID -> BID
+    inc -> edu
     mus -> WID
     pops -> BID
+    pops -> WID
+    pops -> alg
     pops -> edu
     pops -> inc
-    pops -> WID
     pops -> mus
     pops -> soc
     soc -> BID
@@ -77,7 +84,8 @@ make_dag <- function(outcome = 'draw', exposure = 'pop_category'){
     str_replace_all('mus', '"Musical venues"') %>%
     str_replace_all('pops', '"Population size"') %>%
     str_replace_all('gen', "Gender") %>%
-    str_replace_all('soc', '"Global friendships"') 
+    str_replace_all('soc', '"Global friendships"')  %>%
+    str_replace_all('alg', "Algorithmic streams")
   
   plot_dag %>% dagitty() %>% plot()
   
@@ -114,7 +122,7 @@ plot_dag <- function(dag, adj = NULL){
 dag_data <- readRDS('data_output/dag_data.rds')
 
 census_data <- read.csv('data/census/fr/fr_nuts3_meta.csv')
-dag_data_quantile <-census_data %>% left_join(dag_data %>% distinct(NUTS3, pop_size_category))
+dag_data_quantile <- census_data %>% left_join(dag_data %>% distinct(NUTS3, pop_size_category))
 dag_data_quantile %>%
   group_by(pop_size_category) %>%
   summarise(median = median(population))
@@ -136,11 +144,12 @@ dag_var <- dag_data %>%
     img = log_immigrant_percentage,
     inc = log_income_per_capita,
     soc = log_global_friends,
+    alg = algo_nuts,
     gen = gender,
     pop_category = pop_size_category
     ) %>%
   na.omit() %>%
-  mutate(across(BID:soc, scale)) # Z-score all the continuous variables
+  mutate(across(BID:alg, scale)) # Z-score all the continuous variables
 
 # check if all variables are in the right format
 str(dag_var)
@@ -177,6 +186,7 @@ if(testing){
               Immigration = mean(img),
               Income = mean(inc),
               'Social connections' = mean(soc),
+              'Algorithmic streams' = mean(alg),
               Gender = mean(as.numeric(gen))
     ) %>% 
     ungroup() 

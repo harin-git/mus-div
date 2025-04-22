@@ -106,8 +106,8 @@ make_example_regional <- function(city, h = 2, max_lim = 0.05, SI = FALSE){
 (paris_raster <- make_example_regional(paris, h = 3, max_lim = 0.04))
 (orne_raster <- make_example_regional(orne, h = 3, max_lim = 0.04))
 
-(joined_raster <- paris_raster + orne_raster + plot_layout(guide = 'collect') & theme(legend.position = 'right'))
-joined_raster %>% plot_save('main/umap_user_cluster', c(113, 50))
+(joined_raster <- paris_raster/orne_raster + plot_layout(guide = 'collect') & theme(legend.position = 'right'))
+joined_raster %>% plot_save('main/umap_user_cluster', c(80, 80))
 
 # add several more to SI
 make_example_regional('FR107', h = 3, max_lim = 0.04, SI = T) %>%
@@ -137,13 +137,13 @@ country_lines <- fr_map %>%
 (france_map <- fr_map %>%
     ggplot() +
     geom_sf(linewidth = 0, color = 'black', alpha = 1) + 
-    geom_sf(data = country_lines, col = "gray50", linewidth = 1) +
+    geom_sf(data = country_lines, col = "gray50", linewidth = 0.5) +
     # Center in France
     coord_sf(
       xlim = c(3277294, 4253440),
       ylim = c(2013597, 3228510)) +
     theme_void())
-france_map %>% plot_save('main/france_map', size = c(30,30))
+france_map %>% plot_save('main/france_map', size = c(20,20))
 
 
 

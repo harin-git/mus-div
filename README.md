@@ -1,6 +1,6 @@
 # Mus-Div
 
-This repo contains code and data for the paper "*Why cities vary in their cultural diversity"*. The data is also available for download at OSF: <https://osf.io/6zugm/>
+This repo contains code and data for the paper "*Mechanisms of Cultural Diversity in Urban Populations"*. The data is also available for download at OSF: <https://osf.io/6zugm/>
 
 ## Codebook
 

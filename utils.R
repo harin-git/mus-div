@@ -329,7 +329,7 @@ map_users <- function(user_data, geom_data, CRS = 4326){
 ## PLOT
 ################################################################################
 # save plot
-plot_save <- function(plot = last_plot(), plot_name, size = c(183, 100), pdf = TRUE){ 
+plot_save <- function(plot = last_plot(), plot_name, size = c(183, 100), pdf = TRUE, svg = TRUE){ 
   # default size for journal is 183mm wide
   
   # saves both pdf and png versions of the plot
@@ -343,6 +343,19 @@ plot_save <- function(plot = last_plot(), plot_name, size = c(183, 100), pdf = T
       path = 'figure_output',
       dpi = 'print',
       device = 'pdf'
+    )
+  }
+
+  if(svg){
+    ggsave(
+      filename = paste0(plot_name, '.svg'),
+      plot = plot,
+      width = size[1],
+      height = size[2],
+      units = 'mm',
+      path = 'figure_output',
+      dpi = 'print',
+      device = 'svg'
     )
   }
 

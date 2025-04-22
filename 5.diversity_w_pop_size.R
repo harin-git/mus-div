@@ -241,7 +241,7 @@ cross_cultural_difference <- function(plot_type = c('WID', 'BID')){
                  FR_COL1,
                  ifelse(country == 'Brazil', BR_COL1, DE_COL1)
                )))) +
-    geom_boxplot(outlier.alpha = 0) +
+    geom_boxplot(outlier.alpha = 0, size = 0.2) +
     labs(x = '', 
          y = '') +
     scale_y_continuous(n.breaks = 4) +
@@ -251,8 +251,8 @@ cross_cultural_difference <- function(plot_type = c('WID', 'BID')){
   
   # save plot
   switch (plot_type,
-          'WID' = plot_save(p, plot_name = 'main/WID_group_diff', size = c(50, 50)),
-          'BID' = plot_save(p, plot_name = 'main/BID_group_diff', size = c(50, 50))
+          'WID' = plot_save(p, plot_name = 'main/WID_group_diff', size = c(40, 35)),
+          'BID' = plot_save(p, plot_name = 'main/BID_group_diff', size = c(40, 35))
   )
   
 }
